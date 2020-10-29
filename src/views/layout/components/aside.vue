@@ -59,6 +59,7 @@ export default {
   .side-logo{
     width: 32px;
     height: 32px;
+    /*vertical-align 属性设置元素的垂直对齐方式*/
     vertical-align: middle;
     margin-left: 20px;
   }

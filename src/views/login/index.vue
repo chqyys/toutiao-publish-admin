@@ -115,13 +115,17 @@ export default {
       // 2.建议是把所有的请求都封装成函数然后统一的组织到模块中进行管理
       // 3.这样的好处就是 管理维护更方便 也好重用
       login(this.user).then(res => {
-        console.log(res)
+        // console.log(res)
         this.$message({
           message: '登录成功',
           type: 'success'
         })
         // 关闭 loading
         this.loginloading = false
+
+        // 将接口返回的用户相关的数据放到本地存储(token)
+        // 本地存储只能存储字符串 如果需要存储对象 数组 则把他们转为json格式字符串存储
+        window.localStorage.setItem('user', JSON.stringify(res.data.data))
 
         // 跳转到首页,两种方式都可以
         this.$router.push('/')

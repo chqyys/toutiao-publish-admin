@@ -15,7 +15,20 @@ const request = axios.create({
   baseURL: 'http://ttapi.research.itcast.cn/' // 请求的基础路径
 })
 
-// 请求拦截器
+// 请求拦截器 因为我们创建了一个axios实例 request 如果直接用axios的话，就用axios.intercepter
+request.interceptors.request.use(
+  // config是当前请求相关的配置信息对象 并且可以修改
+  function (config) {
+  // 所有请求会经过这里
+    const user = JSON.parse(window.localStorage.getItem('user'))
+    if (user) {
+      config.headers.Authorization = `Bearer ${user.token}`
+    }
+    return config
+  }, function (error) {
+  // 请求失败 会经过这里
+    return Promise.reject(error)
+  })
 
 // 响应拦截器
 
