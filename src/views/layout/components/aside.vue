@@ -5,6 +5,7 @@
     text-color="#fff"
     active-text-color="#409EFF"
     router
+    :collapse="isCollapse"
   >
     <img src="../logo.png" class="side-logo">
     <h5 class="side-text">后台管理系统</h5>
@@ -43,7 +44,9 @@
 export default {
   name: 'LayoutAside',
   components: {},
-  props: {},
+  props: {
+    isCollapse: Boolean
+  },
   data () {
     return {}
   },
@@ -61,7 +64,6 @@ export default {
     height: 32px;
     /*vertical-align 属性设置元素的垂直对齐方式*/
     vertical-align: middle;
-    margin-left: 20px;
   }
   .side-text{
     display: inline-block;

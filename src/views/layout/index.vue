@@ -1,12 +1,22 @@
 <template>
   <el-container class="layout-container">
-    <el-aside class="aside" width="200px">
-      <layout-aside class="aside-menu"></layout-aside>
+    <el-aside width="auto" class="aside">
+      <layout-aside :isCollapse='isCollapse' class="aside-menu"></layout-aside>
     </el-aside>
     <el-container>
       <el-header class="header">
         <div class="header-style">
-        <i class="el-icon-s-fold fold-icon"></i>
+          <!--
+          class样式处理
+          css类名：布尔值
+          true:作用类名
+          -->
+        <i
+          @click="isCollapse = !isCollapse"
+          :class="{
+            'el-icon-s-fold':isCollapse,
+            'el-icon-s-unfold':!isCollapse
+          }"></i>
         <span>首页</span>
         </div>
         <el-dropdown>
@@ -17,7 +27,10 @@
           </div>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item>个人中心</el-dropdown-item>
-            <el-dropdown-item>退出登录</el-dropdown-item>
+            <!--将原生事件绑定到组件上：组件默认是不识别原生事件的，除非组件内部做了处理-->
+            <el-dropdown-item
+              @click.native="onLogout"
+            >退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </el-header>
@@ -39,7 +52,8 @@ export default {
   props: {},
   data () {
     return {
-      user: {}
+      user: {},
+      isCollapse: false
     }
   },
   computed: {},
@@ -55,6 +69,27 @@ export default {
         this.user = res.data.data
       }).catch(err => {
         console.log('登录失败', err)
+      })
+    },
+    onLogout () {
+      this.$confirm('是否退出登录?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$message({
+          type: 'success',
+          message: '退出成功!'
+        })
+        // 把用户的登录状态清除
+        window.localStorage.removeItem('user')
+        // 并跳转到登录页面
+        this.$router.push('/login')
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消退出'
+        })
       })
     }
   }
