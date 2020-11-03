@@ -45,7 +45,7 @@
           </el-date-picker>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadArticle(1)">查询</el-button>
+          <el-button :disabled="loading" type="primary" @click="loadArticle(1)">查询</el-button>
         </el-form-item>
       </el-form>
       <!-- /数据筛选表单 -->
@@ -68,12 +68,14 @@
   3、表格列默认只能渲染普通文本，如果需要展示其它内容，例如放个按钮啊、放个图片啊，那就需要自定义表格列模板了
   ：https://element.eleme.cn/#/zh-CN/component/table#zi-ding-yi-lie-mo-ban
  -->
+
       <el-table
         :data="articles"
         stripe
         style="width: 100%"
         class="list-table"
         size="mini"
+        v-loading="loading"
       >
 <!--        <el-table-column type="selection" width="55" />-->
         <el-table-column
@@ -111,15 +113,18 @@
         </el-table-column>
         <el-table-column
           label="操作">
-          <template>
+          <template slot-scope="scope">
             <el-button class="el-button el-button--primary"
               size="mini"
               >
-              <i class="el-icon-edit"></i>
+              <i class="el-icon-edit"
+              @click="$router.push('/publish?id=' + scope.row.id)"
+              ></i>
             </el-button>
             <el-button class="el-button el-button--danger"
               size="mini"
               type="danger"
+              @click="onDeleteArticle(scope.row.id)"
               >
               <i class="el-icon-delete"></i>
             </el-button>
@@ -127,7 +132,6 @@
         </el-table-column>
       </el-table>
       <!-- /数据列表 -->
-
       <!-- 列表分页 -->
       <el-pagination
         layout="prev, pager, next"
@@ -135,6 +139,8 @@
         @current-change="onCurrentChange"
         :total="totalCount"
         :page-size="pageSize"
+        :disabled="loading"
+        :current-page.sync="page"
       >
       </el-pagination>
       <!-- /列表分页 -->
@@ -143,11 +149,10 @@
 </template>
 
 <script>
-import { getArticle, getArticleChannels } from '../../api/article'
+import { getArticles, getArticleChannels, delArticles } from '../../api/article'
 
 export default {
   name: 'ArticleIndex',
-  components: {},
   props: {},
   data () {
     return {
@@ -174,7 +179,9 @@ export default {
       status: null, // 查询文章的状态
       channels: [], // 文章频道列表
       channelId: null, // 查询文章的频道
-      rangeDate: null // 筛选的范围时间
+      rangeDate: null, // 筛选的范围时间
+      loading: true, // 表单数据加载中 loading
+      page: 1
     }
   },
   computed: {},
@@ -189,7 +196,8 @@ export default {
       console.log('submit!')
     },
     loadArticle (page = 1) {
-      getArticle({
+      this.loading = true
+      getArticles({
         page: page,
         per_page: this.pageSize,
         status: this.status,
@@ -197,11 +205,14 @@ export default {
         begin_pubdate: this.rangeDate ? this.rangeDate[0] : null, // 开始时间
         end_pubdate: this.rangeDate ? this.rangeDate[1] : null // 截止时间
       }).then(res => {
-        console.log(res)
+        // console.log(res)
         // this.articles = res.data.data.results,
         const { results, total_count: totalCount } = res.data.data
         this.articles = results
         this.totalCount = totalCount
+
+        // 关闭加载中loading
+        this.loading = false
       })
     },
     onCurrentChange (page) {
@@ -211,6 +222,29 @@ export default {
     loadChannels () {
       getArticleChannels().then(res => {
         this.channels = res.data.data.channels
+      })
+    },
+    onDeleteArticle (articleId) {
+      console.log(articleId)
+      console.log(articleId.toString())
+      this.$confirm('是否确认删除?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        delArticles(articleId.toString()).then(res => {
+          // 删除成功 更新当前页文章数据列表
+          this.loadArticle(this.page)
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
       })
     }
   }
