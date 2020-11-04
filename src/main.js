@@ -6,6 +6,7 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import './styles/index.less'
+import { ElementTiptapPlugin } from 'element-tiptap'
 // 加载 element 组件库
 import ElementUI from 'element-ui'
 
@@ -15,6 +16,9 @@ Vue.config.productionTip = false
 
 // 全局注册 element 组件库
 Vue.use(ElementUI)
+Vue.use(ElementTiptapPlugin, {
+  lang: 'zh'
+})
 
 // 创建vue根实例
 // 把router配置到根实例中

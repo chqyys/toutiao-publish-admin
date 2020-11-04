@@ -5,7 +5,7 @@
         <!-- 面包屑路径导航 -->
         <el-breadcrumb separator-class="el-icon-arrow-right">
           <el-breadcrumb-item to="/">首页</el-breadcrumb-item>
-          <el-breadcrumb-item>发布文章</el-breadcrumb-item>
+          <el-breadcrumb-item>{{$route.query.id ?'修改文章' : '发布文章'}}</el-breadcrumb-item>
         </el-breadcrumb>
         <!-- /面包屑路径导航 -->
       </div>
@@ -14,7 +14,15 @@
           <el-input v-model="article.title"></el-input>
         </el-form-item>
         <el-form-item label="内容">
-          <el-input type="textarea" v-model="article.content"></el-input>
+<!--          <el-input type="textarea" v-model=" article.content"></el-input>-->
+            <el-tiptap
+              height="350"
+              charCounterCount="true"
+              tooltip="true"
+              placeholder="请输入内容"
+              v-model="article.content"
+              :extensions="extensions"
+            />
         </el-form-item>
         <el-form-item label="封面">
           <el-radio-group v-model="article.cover.type">
@@ -45,11 +53,35 @@
 </template>
 
 <script>
-import { getArticleChannels, addArticles, getArticle } from '../../api/article'
+import { getArticleChannels, addArticles, getArticle, updateArticle } from '../../api/article'
+import {
+  // 需要的 extensions
+  Doc,
+  Text,
+  Paragraph,
+  Heading,
+  Bold,
+  Image,
+  Underline,
+  Italic,
+  Strike,
+  ListItem,
+  BulletList,
+  OrderedList,
+  Preview,
+  CodeBlock,
+  Blockquote,
+  TextColor,
+  CodeView,
+  Link
+} from 'element-tiptap'
+// import element-tiptap 样式
+import 'element-tiptap/lib/index.css'
 
 export default {
   name: 'PublishIndex',
-  components: {},
+  components: {
+  },
   props: {},
   data () {
     return {
@@ -62,7 +94,27 @@ export default {
         },
         channel_id: null
       },
-      channels: [] // 文章频道列表
+      channels: [], // 文章频道列表
+      extensions: [
+        new Doc(),
+        new Text(),
+        new TextColor(),
+        new Link(),
+        new Paragraph(),
+        new Heading({ level: 5 }),
+        new Bold({ bubble: true }), // 在气泡菜单中渲染菜单按钮
+        new Underline({ bubble: true, menubar: false }), // 在气泡菜单而不在菜单栏中渲染菜单按钮
+        new Italic(),
+        new Strike(),
+        new ListItem(),
+        new BulletList(),
+        new OrderedList(),
+        new Image(),
+        new CodeBlock(),
+        new CodeView(),
+        new Blockquote(),
+        new Preview()
+      ]
     }
   },
   computed: {},
@@ -81,13 +133,37 @@ export default {
       })
     },
     onPublish (draft = false) {
-      addArticles(this.article, draft).then(res => {
-        console.log(res)
-        this.$message({
-          message: '发布成功',
-          type: 'success'
+      // addArticles(this.article, draft).then(res => {
+      //   console.log(res)
+      //   this.$message({
+      //     message: '发布成功',
+      //     type: 'success'
+      //   })
+      // })
+      const articleId = this.$route.query.id
+      if (articleId) {
+        // 执行修改操作
+        updateArticle(articleId, this.article, draft).then(res => {
+          console.log(res)
+          this.$message({
+            message: `${draft ? '存入草稿' : '发布'}成功`,
+            type: 'success'
+          })
+          // 跳转到内容管理页面
+          this.$router.push('/article')
         })
-      })
+      } else {
+        addArticles(this.article, draft).then(res => {
+          // 处理响应结果
+          // console.log(res)
+          this.$message({
+            message: `${draft ? '存入草稿' : '发布'}成功`,
+            type: 'success'
+          })
+          // 跳转到内容管理页面
+          this.$router.push('/article')
+        })
+      }
     },
     loadArticle () {
       getArticle(this.$route.query.id).then(res => {
