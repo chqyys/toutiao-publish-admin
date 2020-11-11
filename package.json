@@ -13,6 +13,7 @@
     "element-tiptap": "^1.26.2",
     "element-ui": "^2.13.2",
     "json-bigint": "^1.0.0",
+    "stylus-loader": "^4.2.0",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0"
   },

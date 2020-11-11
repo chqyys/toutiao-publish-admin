@@ -9,16 +9,16 @@
         </el-breadcrumb>
         <!-- /面包屑路径导航 -->
       </div>
-      <el-form ref="form" :model="article" label-width="40px">
-        <el-form-item label="标题">
+      <el-form :rules="formRules" ref="publish_form" :model="article" label-width="60px">
+        <el-form-item label="标题" prop="title">
           <el-input v-model="article.title"></el-input>
         </el-form-item>
-        <el-form-item label="内容">
+        <el-form-item label="内容" prop="content">
 <!--          <el-input type="textarea" v-model=" article.content"></el-input>-->
             <el-tiptap
               height="350"
-              charCounterCount="true"
-              tooltip="true"
+              :charCounterCount="true"
+              :tooltip="true"
               placeholder="请输入内容"
               v-model="article.content"
               :extensions="extensions"
@@ -32,7 +32,7 @@
             <el-radio :label="-1">自动</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="频道">
+        <el-form-item label="频道" prop="channel_id">
             <el-select v-model="article.channel_id" placeholder="请选择频道">
               <el-option
                 v-for="( channel, index ) in channels"
@@ -72,11 +72,11 @@ import {
   CodeBlock,
   Blockquote,
   TextColor,
-  CodeView,
   Link
 } from 'element-tiptap'
 // import element-tiptap 样式
 import 'element-tiptap/lib/index.css'
+import { uploadImage } from '../../api/image'
 
 export default {
   name: 'PublishIndex',
@@ -109,12 +109,46 @@ export default {
         new ListItem(),
         new BulletList(),
         new OrderedList(),
-        new Image(),
+        new Image(
+          {
+            uploadRequest (file) {
+              const fd = new FormData()
+              fd.append('image', file)
+              return uploadImage(fd).then(res => {
+                return res.data.data.url
+              })
+            }
+          }
+        ),
         new CodeBlock(),
-        new CodeView(),
         new Blockquote(),
         new Preview()
-      ]
+      ],
+      formRules: {
+        title: [
+          { required: true, message: '请输入文章标题', trigger: 'blur' },
+          { min: 5, max: 30, message: '长度在 5 到 30 个字符', trigger: 'blur' }
+        ],
+        content: [
+          // { required: true, message: '请输入文章内容', trigger: 'change' }
+          {
+            validator (rule, value, callback) {
+              console.log('content validator')
+              if (value === '<p></p>') {
+                // 验证失败
+                callback(new Error('请输入文章内容'))
+              } else {
+                // 验证通过
+                callback()
+              }
+            }
+          },
+          { required: true, message: '请输入文章内容', trigger: 'blur' }
+        ],
+        channel_id: [
+          { required: true, message: '请选择文章频道' }
+        ]
+      }
     }
   },
   computed: {},
@@ -133,37 +167,42 @@ export default {
       })
     },
     onPublish (draft = false) {
-      // addArticles(this.article, draft).then(res => {
-      //   console.log(res)
-      //   this.$message({
-      //     message: '发布成功',
-      //     type: 'success'
-      //   })
-      // })
-      const articleId = this.$route.query.id
-      if (articleId) {
+      this.$refs.publish_form.validate((valid) => {
+        if (!valid) {
+          return
+        }
+        // addArticles(this.article, draft).then(res => {
+        //   console.log(res)
+        //   this.$message({
+        //     message: '发布成功',
+        //     type: 'success'
+        //   })
+        // })
+        const articleId = this.$route.query.id
+        if (articleId) {
         // 执行修改操作
-        updateArticle(articleId, this.article, draft).then(res => {
-          console.log(res)
-          this.$message({
-            message: `${draft ? '存入草稿' : '发布'}成功`,
-            type: 'success'
+          updateArticle(articleId, this.article, draft).then(res => {
+            console.log(res)
+            this.$message({
+              message: `${draft ? '存入草稿' : '发布'}成功`,
+              type: 'success'
+            })
+            // 跳转到内容管理页面
+            this.$router.push('/article')
           })
-          // 跳转到内容管理页面
-          this.$router.push('/article')
-        })
-      } else {
-        addArticles(this.article, draft).then(res => {
+        } else {
+          addArticles(this.article, draft).then(res => {
           // 处理响应结果
           // console.log(res)
-          this.$message({
-            message: `${draft ? '存入草稿' : '发布'}成功`,
-            type: 'success'
+            this.$message({
+              message: `${draft ? '存入草稿' : '发布'}成功`,
+              type: 'success'
+            })
+            // 跳转到内容管理页面
+            this.$router.push('/article')
           })
-          // 跳转到内容管理页面
-          this.$router.push('/article')
-        })
-      }
+        }
+      })
     },
     loadArticle () {
       getArticle(this.$route.query.id).then(res => {
